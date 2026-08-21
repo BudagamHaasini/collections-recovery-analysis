@@ -1,4 +1,4 @@
-# collections-recovery-analysis
+
 # Collections Recovery Analysis
 
 ## Overview
@@ -87,11 +87,11 @@ Business Analysis
 Business Conclusion
 The raw data is never directly modified. Cleaning and analytical tables are created as derived datasets.
 
-Dataset Overview
+## Dataset Overview
 
 The project contains the following raw datasets:
 
-Dataset	Description
+## Dataset	Description
 borrowers.csv	Borrower-level information
 accounts.csv	Account and outstanding balance information
 agents.csv	Collection agent information
@@ -113,7 +113,7 @@ Data Profiling
 
 The first stage of the project was to profile the raw datasets.
 
-The profiling process examined:
+## The profiling process examined:
 
 Row counts
 Column structures
@@ -163,7 +163,7 @@ Call Disposition Changes
 
 The telephony disposition vocabulary changed during the analysis period.
 
-Historical codes included:
+## Historical codes included:
 
 ANSWERED
 BUSY
@@ -199,7 +199,7 @@ WRONG_PARTY / WRONG_NUMBER
 
 This prevents the change in vendor terminology from being incorrectly interpreted as a change in collection performance.
 
-Cleaning Layer
+## Cleaning Layer
 
 The cleaned analytical tables were generated from the raw CSV files.
 
@@ -216,7 +216,7 @@ Preserving raw values for auditability
 
 The account status history was not deduplicated by account_id because multiple status transitions for the same account are legitimate business events.
 
-Golden Dataset
+## Golden Dataset
 
 A Golden Dataset was created to provide a trusted analytical layer.
 
@@ -243,7 +243,7 @@ Daily targeting
 
 The Golden Dataset contains account-level attributes together with monthly collection activity and recovery information.
 
-Important fields include:
+## Important fields include:
 
 month
 account_id
@@ -272,7 +272,7 @@ Golden Dataset Validation
 
 The Golden Dataset was validated against the cleaned source tables to ensure that joins did not inflate important metrics.
 
-The validation produced the following results:
+## The validation produced the following results:
 
 Metric	Clean Source	Golden Dataset
 Successful recovery amount	61,638,872.27	61,638,872.27
@@ -280,7 +280,7 @@ Successful payments	7,504	7,504
 PTP records	6,500	6,500
 Calls	30,000	30,000
 
-Additional validation showed:
+## Additional validation showed:
 
 No missing borrower relationships
 No negative recovery amounts
@@ -320,7 +320,7 @@ These metrics provide a broader view of collection effectiveness instead of rely
 
 Month-on-Month Recovery Analysis
 
-The calculated recovery rates were:
+## The calculated recovery rates were:
 
 Month	Recovery Rate	MoM Change
 Sep-2025	7.52%	—
@@ -364,7 +364,7 @@ Further declines occurred in April, May, June, and July.
 
 Therefore, the available 12-month data does not support the statement that recovery consistently improved by 11% month-on-month.
 
-DPD Analysis
+## DPD Analysis
 
 Recovery performance was also analyzed across DPD buckets.
 
@@ -387,13 +387,13 @@ Targeting Strategy Analysis
 
 The targeting strategy changed during the observation period.
 
-The data shows:
+## The data shows:
 
 OLD_TARGETING
 September 2025 – February 2026
 
 
-NEW_TARGETING
+## NEW_TARGETING
 March 2026 – August 2026
 
 Observed overall recovery rates were:
@@ -406,7 +406,7 @@ The new targeting strategy therefore did not show a clear overall recovery advan
 
 More importantly, the approximately 11% improvement occurred in February 2026, when OLD_TARGETING was still being used.
 
-Therefore:
+## Therefore:
 
 The February 2026 improvement cannot be attributed to the introduction of NEW_TARGETING.
 
@@ -425,7 +425,7 @@ Informal borrowers had the highest observed recovery rate, while Self_Employed b
 
 These differences can be used to support further segmentation analysis.
 
-Client Analysis
+## Client Analysis
 
 Recovery rates by client were:
 
@@ -439,7 +439,7 @@ Client_D had the highest observed recovery rate and Client_C had the lowest.
 
 The differences are relatively moderate, so these results should be treated as descriptive rather than causal.
 
-Key Findings
+## Key Findings
 The reported 11% month-on-month improvement is not supported as a sustained trend.
 February 2026 experienced an approximately 11% month-on-month increase in recovery rate.
 The February improvement was not maintained in subsequent months.
@@ -494,7 +494,7 @@ PTP Kept Rate
 
 This provides a more complete picture of collection effectiveness.
 
-SQL Analysis Files
+## SQL Analysis Files
 
 The SQL analysis is organized sequentially:
 
@@ -511,7 +511,7 @@ File	Purpose
 10_targeting_monthly.sql	Analyze targeting performance over time
 Python Utility Scripts
 
-Python scripts are used to execute and validate the SQL workflow through DuckDB.
+## Python scripts are used to execute and validate the SQL workflow through DuckDB.
 
 Examples include:
 
@@ -528,7 +528,7 @@ check_schema.py
 
 The Python layer is intentionally lightweight. SQL performs the majority of the data analysis.
 
-Repository Structure
+## Repository Structure
 collections-recovery-analysis/
 │
 ├── raw/
@@ -579,7 +579,7 @@ Limitations
 
 This analysis is primarily descriptive and does not establish causal relationships.
 
-In particular:
+## In particular:
 
 Targeting groups may contain different borrower populations.
 Records without targeting assignments limit targeting comparisons.
