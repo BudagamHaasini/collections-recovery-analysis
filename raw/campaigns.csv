@@ -1,0 +1,13 @@
+campaign_id,campaign_name,targeting_strategy,start_date,channel_focus
+C001,Collection_Campaign_01,OLD_TARGETING,2025-09-01,Human
+C002,Collection_Campaign_02,OLD_TARGETING,2025-10-01,Predictive
+C003,Collection_Campaign_03,OLD_TARGETING,2025-11-01,Human
+C004,Collection_Campaign_04,OLD_TARGETING,2025-12-01,AI_Voice
+C005,Collection_Campaign_05,OLD_TARGETING,2026-01-01,WhatsApp
+C006,Collection_Campaign_06,OLD_TARGETING,2026-02-01,Field
+C007,Collection_Campaign_07,NEW_TARGETING,2026-03-01,Human
+C008,Collection_Campaign_08,NEW_TARGETING,2026-04-01,Predictive
+C009,Collection_Campaign_09,NEW_TARGETING,2026-05-01,Human
+C010,Collection_Campaign_10,NEW_TARGETING,2026-06-01,AI_Voice
+C011,Collection_Campaign_11,NEW_TARGETING,2026-07-01,WhatsApp
+C012,Collection_Campaign_12,NEW_TARGETING,2026-08-01,Field
