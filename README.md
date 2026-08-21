@@ -1,535 +1,149 @@
-
 # Collections Recovery Analysis
 
 ## Overview
 
-This project investigates a business claim that:
+This project analyzes approximately 12 months of collections and recovery data to determine whether the business claim:
 
-> "Recovery has improved by 11% month-on-month."
+> "Recovery has improved significantly."
 
-The objective is to independently evaluate this claim using approximately 12 months of collections data covering borrowers, accounts, agents, campaigns, calls, digital interactions, field visits, promises-to-pay, payments, complaints, and account status history.
+is supported by the underlying data.
 
-The analysis focuses on determining whether the reported improvement is supported by the underlying data and identifying factors that may explain changes in recovery performance.
+The analysis works with multiple operational datasets covering borrowers, accounts, agents, campaigns, calls, call attempts, call dispositions, digital interactions, field visits, promises-to-pay, payments, complaints, and account status history.
+
+The project focuses on identifying data-quality issues, creating a reliable analytical dataset, calculating recovery metrics, analyzing month-on-month performance, and evaluating the impact of targeting strategies.
+
+The final result is an interactive Streamlit dashboard that presents the major findings.
 
 ---
 
 ## Business Objective
 
-The primary objective is to determine whether recovery performance has actually improved by 11% month-on-month.
+The business currently reports an improvement in recovery performance.
 
-The analysis also investigates:
+The objective of this project is to determine:
 
-- Recovery rate over time
-- Month-on-month recovery changes
-- DPD-level recovery performance
-- Targeting strategy performance
-- Borrower segment performance
-- Client-level performance
-- Contact and collection activity
-- Data quality and attribution issues
+- Whether recovery performance actually improved
+- Whether the improvement was sustained over time
+- How recovery varies across DPD buckets
+- Whether the new targeting strategy performed better than the old strategy
+- Which borrower segments perform better
+- Which clients generate stronger recovery performance
+- Whether the reported improvement can reasonably be attributed to the new targeting strategy
 
-The analysis intentionally avoids relying only on the reported business metric and instead reconstructs the key metrics independently from the underlying data.
+The analysis deliberately separates observed trends from causal claims.
+
+---
+
+## Dataset
+
+The project contains the following datasets:
+
+- Borrowers
+- Accounts
+- Agents
+- Agent Sessions
+- Campaigns
+- Daily Targeting
+- Calls
+- Call Attempts
+- Call Dispositions
+- WhatsApp Events
+- SMS Events
+- Field Visits
+- Promises to Pay
+- Payments
+- Vendor Telephony
+- Complaints
+- Account Status History
+
+The data covers approximately 12 months from September 2025 through August 2026.
 
 ---
 
 ## Technology Stack
 
-### Programming and Analysis
+### Data Processing and Analysis
 
-- Python 3.13
-- SQL
+- Python
 - DuckDB
+- SQL
+- Pandas
 
-### Development Tools
+### Dashboard
+
+- Streamlit
+- Plotly
+
+### Development
 
 - Visual Studio Code
-- PowerShell
 - Git
 - GitHub
-
-### Data Processing
-
-- DuckDB was used as the analytical SQL engine.
-- Python scripts were used to execute SQL files and validate results.
-- CSV files were used as the raw data source.
 
 ---
 
 ## Project Architecture
 
-The project follows a layered analytical workflow:
-
 ```text
-Raw Data
-   |
-   v
+Raw CSV Data
+     |
+     v
 Data Profiling
-   |
-   v
-Data Quality Assessment
-   |
-   v
+     |
+     v
+Data Quality Checks
+     |
+     v
 Data Cleaning
-   |
-   v
+     |
+     v
 Golden Dataset
-   |
-   v
+     |
+     v
 Golden Dataset Validation
-   |
-   v
+     |
+     v
 Recovery Metrics
-   |
-   v
-Business Analysis
-   |
-   v
-Business Conclusion
-The raw data is never directly modified. Cleaning and analytical tables are created as derived datasets.
-
-## Dataset Overview
-
-The project contains the following raw datasets:
-
-## Dataset	Description
-borrowers.csv	Borrower-level information
-accounts.csv	Account and outstanding balance information
-agents.csv	Collection agent information
-agent_sessions.csv	Agent login and productivity information
-campaigns.csv	Campaign-level information
-daily_targeting.csv	Daily account targeting information
-calls.csv	Collection call records
-call_attempts.csv	Individual call attempts
-call_dispositions.csv	Call outcome/disposition information
-whatsapp_events.csv	WhatsApp interaction events
-sms_events.csv	SMS interaction events
-field_visits.csv	Field collection visits
-promises_to_pay.csv	Promises-to-pay records
-payments.csv	Payment transactions
-vendor_telephony.csv	Telephony disposition mapping
-complaints.csv	Customer complaints
-account_status_history.csv	Account status transition history
-Data Profiling
-
-The first stage of the project was to profile the raw datasets.
-
-## The profiling process examined:
-
-Row counts
-Column structures
-Missing values
-Duplicate records
-Unique identifiers
-Invalid amounts
-Referential integrity
-Status distributions
-Channel distributions
-Disposition-code changes
-Account history structure
-
-The profiling results were used to identify data-quality issues before any cleaning or business analysis was performed.
-
-Data Quality Findings
-
-Several data-quality issues were identified.
-
-Duplicate Records
-
-The following exact duplicate records were identified:
-
-Dataset	Issue	Treatment
-borrowers	Duplicate borrower record	Removed exact duplicate
-accounts	Duplicate account record	Removed exact duplicate
-call_attempts	Duplicate attempt record	Removed exact duplicate
-payments	Five duplicate payment records	Removed exact duplicates
-
-The raw records were preserved. Only the derived clean layer was modified.
-
-Agent Session Anomalies
-
-A number of agent session records contained cases where:
-
-productive_hours > logged_hours
-
-These records were not deleted because the underlying cause could not be established from the available data.
-
-Instead, a quality flag was created:
-
-session_quality_issue
-
-This allows the records to remain available for auditability while preventing the anomaly from being silently treated as valid productivity data.
-
-Call Disposition Changes
-
-The telephony disposition vocabulary changed during the analysis period.
-
-## Historical codes included:
-
-ANSWERED
-BUSY
-NO_ANSWER
-PTP
-WRONG_PARTY
-
-Newer codes included:
-
-CONNECTED
-NA
-PROMISE
-WRONG_NUMBER
-
-These codes were standardized into common analytical categories while preserving the original raw disposition code.
-
-For example:
-
-ANSWERED / CONNECTED
-        -> CONTACT
-
-
-BUSY / NO_ANSWER / NA
-        -> NO_CONTACT
-
-
-PTP / PROMISE
-        -> PTP
-
-
-WRONG_PARTY / WRONG_NUMBER
-        -> WRONG_PARTY
-
-This prevents the change in vendor terminology from being incorrectly interpreted as a change in collection performance.
-
-## Cleaning Layer
-
-The cleaned analytical tables were generated from the raw CSV files.
-
-Important cleaning decisions included:
-
-Removing exact duplicate borrower records
-Removing exact duplicate account records
-Removing exact duplicate call-attempt records
-Removing duplicate payment transactions
-Standardizing telephony disposition codes
-Flagging invalid agent-session records
-Preserving account status history events
-Preserving raw values for auditability
-
-The account status history was not deduplicated by account_id because multiple status transitions for the same account are legitimate business events.
-
-## Golden Dataset
-
-A Golden Dataset was created to provide a trusted analytical layer.
-
-Analytical Grain
-
-The Golden Dataset uses:
-
-One row = One account in one month
-
-The resulting table is:
-
-golden_account_month
-
-It combines information from:
-
-Borrowers
-Accounts
-Calls
-Call attempts
-Call dispositions
-Promises-to-pay
-Payments
-Daily targeting
-
-The Golden Dataset contains account-level attributes together with monthly collection activity and recovery information.
-
-## Important fields include:
-
-month
-account_id
-borrower_id
-client
-geography
-language
-borrower_segment
-income_band
-dpd
-outstanding_amount
-account_status
-campaign_id
-targeting_strategy
-priority_band
-propensity_score
-total_calls
-total_attempts
-contacts
-ptps
-ptps_kept
-promised_amount
-successful_payments
-recovered_amount
-Golden Dataset Validation
-
-The Golden Dataset was validated against the cleaned source tables to ensure that joins did not inflate important metrics.
-
-## The validation produced the following results:
-
-Metric	Clean Source	Golden Dataset
-Successful recovery amount	61,638,872.27	61,638,872.27
-Successful payments	7,504	7,504
-PTP records	6,500	6,500
-Calls	30,000	30,000
-
-## Additional validation showed:
-
-No missing borrower relationships
-No negative recovery amounts
-No duplicate (month, account_id) combinations
-
-This confirms that the Golden Dataset preserves the major financial and operational totals from the cleaned source data.
-
-Recovery Metrics
-
-The primary recovery metric was defined as:
-
-Recovery Rate =
-Recovered Amount / Outstanding Amount
-
-Additional operational metrics were calculated:
-
-Contact Rate =
-Contacts / Attempts
-
-
-PTP Rate =
-PTPs / Contacts
-
-
-PTP Kept Rate =
-PTPs Kept / PTPs
-
-
-Recovery per Account =
-Recovered Amount / Active Accounts
-
-
-Recovery per Attempt =
-Recovered Amount / Attempts
-
-These metrics provide a broader view of collection effectiveness instead of relying on recovery amount alone.
-
-Month-on-Month Recovery Analysis
-
-## The calculated recovery rates were:
-
-Month	Recovery Rate	MoM Change
-Sep-2025	7.52%	—
-Oct-2025	7.21%	-4.09%
-Nov-2025	6.69%	-7.25%
-Dec-2025	6.64%	-0.71%
-Jan-2026	6.75%	+1.70%
-Feb-2026	7.49%	+10.99%
-Mar-2026	7.44%	-0.72%
-Apr-2026	6.89%	-7.38%
-May-2026	6.72%	-2.44%
-Jun-2026	6.70%	-0.31%
-Jul-2026	6.69%	-0.20%
-Aug-2026	7.14%	+6.71%
-Business Claim Assessment
-Reported Claim
-
-"Recovery has improved by 11% month-on-month."
-
-Finding
-
-The claim is not supported as a sustained month-on-month trend.
-
-There was a specific increase of approximately 11% between January and February 2026:
-
-January 2026 Recovery Rate = 6.75%
-
-
-February 2026 Recovery Rate = 7.49%
-
-
-MoM Change = +10.99%
-
-However, the improvement was not sustained.
-
-The following month showed:
-
-February → March = -0.72%
-
-Further declines occurred in April, May, June, and July.
-
-Therefore, the available 12-month data does not support the statement that recovery consistently improved by 11% month-on-month.
-
-## DPD Analysis
-
-Recovery performance was also analyzed across DPD buckets.
-
-The January-to-February comparison showed:
-
-DPD Bucket	Jan Recovery	Feb Recovery
-01–30	8.63%	7.45%
-31–60	6.11%	7.49%
-61–90	6.26%	7.57%
-91–120	6.72%	6.97%
-121–180	6.39%	7.79%
-
-Several DPD groups improved simultaneously, while the number of accounts within each group remained relatively stable.
-
-This suggests that the February improvement was not obviously explained by a large change in DPD portfolio composition.
-
-However, this analysis does not establish causation.
-
-Targeting Strategy Analysis
-
-The targeting strategy changed during the observation period.
-
-## The data shows:
-
-OLD_TARGETING
-September 2025 – February 2026
-
-
-## NEW_TARGETING
-March 2026 – August 2026
-
-Observed overall recovery rates were:
-
-Strategy	Recovery Rate
-OLD_TARGETING	4.68%
-NEW_TARGETING	4.61%
-
-The new targeting strategy therefore did not show a clear overall recovery advantage.
-
-More importantly, the approximately 11% improvement occurred in February 2026, when OLD_TARGETING was still being used.
-
-## Therefore:
-
-The February 2026 improvement cannot be attributed to the introduction of NEW_TARGETING.
-
-Targeting analysis also identified a large number of records without a targeting assignment, which limits the strength of the strategy comparison.
-
-Borrower Segment Analysis
-
-Recovery rates differed across borrower segments:
-
-Borrower Segment	Recovery Rate
-Informal	7.43%
-Salaried	7.03%
-Self_Employed	6.68%
-
-Informal borrowers had the highest observed recovery rate, while Self_Employed borrowers had the lowest.
-
-These differences can be used to support further segmentation analysis.
-
-## Client Analysis
-
-Recovery rates by client were:
-
-Client	Recovery Rate
-Client_D	7.12%
-Client_B	7.11%
-Client_A	6.99%
-Client_C	6.71%
-
-Client_D had the highest observed recovery rate and Client_C had the lowest.
-
-The differences are relatively moderate, so these results should be treated as descriptive rather than causal.
-
-## Key Findings
-The reported 11% month-on-month improvement is not supported as a sustained trend.
-February 2026 experienced an approximately 11% month-on-month increase in recovery rate.
-The February improvement was not maintained in subsequent months.
-Multiple DPD groups improved during February, suggesting that the increase was not obviously caused by a major DPD mix shift.
-The new targeting strategy cannot explain the February improvement because it was introduced in March 2026.
-NEW_TARGETING had a slightly lower overall observed recovery rate than OLD_TARGETING.
-Recovery performance differs across borrower segments.
-Recovery performance also differs across clients.
-A significant number of records have no targeting assignment, limiting the strength of targeting comparisons.
-Recovery should be monitored using multiple operational metrics rather than a single headline percentage.
-Recommendations
-1. Avoid reporting the 11% figure as a sustained improvement
-
-The business should report the February improvement as a specific month-level result rather than presenting it as a persistent trend.
-
-2. Investigate the February 2026 increase
-
-Further investigation should focus on:
-
-Agent performance
-Campaign activity
-Collection channels
-Payment behavior
-Borrower segmentation
-Operational changes
-3. Improve targeting coverage
-
-The large number of records without a targeting assignment makes it difficult to evaluate targeting effectiveness reliably.
-
-Targeting assignment should be consistently recorded.
-
-4. Use segmented collection strategies
-
-Recovery rates differ by:
-
-DPD
-Borrower segment
-Client
-
-These dimensions can be used to design more targeted collection strategies.
-
-5. Monitor a broader KPI set
-
-Recommended monitoring metrics include:
-
-Recovery Rate
-Recovery per Account
-Recovery per Attempt
-Contact Rate
-PTP Rate
-PTP Kept Rate
-
-This provides a more complete picture of collection effectiveness.
-
-## SQL Analysis Files
-
-The SQL analysis is organized sequentially:
-
-File	Purpose
-01_data_profiling.sql	Profile raw datasets
-02_data_quality.sql	Document data-quality issues
-03_cleaning.sql	Create cleaned analytical tables
-04_golden_dataset.sql	Build account-month Golden Dataset
-05_golden_validation.sql	Validate Golden Dataset totals
-06_recovery_metrics.sql	Calculate recovery KPIs
-07_mom_analysis.sql	Calculate month-on-month changes
-08_dpd_analysis.sql	Analyze recovery by DPD
-09_final_analysis.sql	Analyze targeting, segments and clients
-10_targeting_monthly.sql	Analyze targeting performance over time
-Python Utility Scripts
-
-## Python scripts are used to execute and validate the SQL workflow through DuckDB.
-
-Examples include:
-
-run_sql.py
-run_cleaning.py
-run_golden.py
-run_validation.py
-run_metrics.py
-run_mom.py
-run_dpd.py
-run_final_analysis.py
-run_targeting_monthly.py
-check_schema.py
-
-The Python layer is intentionally lightweight. SQL performs the majority of the data analysis.
-
-## Repository Structure
+     |
+     +----------------------+
+     |                      |
+     v                      v
+Monthly / DPD /        Targeting /
+Segment Analysis       Client Analysis
+     |                      |
+     +----------+-----------+
+                |
+                v
+       Streamlit Dashboard
+
+Project Structure
 collections-recovery-analysis/
+│
+├── app.py
+├── check_schema.py
+├── export_dashboard.py
+│
+├── run_sql.py
+├── run_cleaning.py
+├── run_golden.py
+├── run_validation.py
+├── run_metrics.py
+├── run_mom.py
+├── run_dpd.py
+├── run_final_analysis.py
+└── run_targeting_monthly.py
+│
+├── sql/
+│   ├── 01_data_profiling.sql
+│   ├── 02_data_quality.sql
+│   ├── 03_cleaning.sql
+│   ├── 04_golden_dataset.sql
+│   ├── 05_golden_validation.sql
+│   ├── 06_recovery_metrics.sql
+│   ├── 07_mom_analysis.sql
+│   ├── 08_dpd_analysis.sql
+│   ├── 09_final_analysis.sql
+│   └── 10_targeting_monthly.sql
 │
 ├── raw/
 │   ├── borrowers.csv
@@ -550,74 +164,373 @@ collections-recovery-analysis/
 │   ├── complaints.csv
 │   └── account_status_history.csv
 │
-├── sql/
-│   ├── 01_data_profiling.sql
-│   ├── 02_data_quality.sql
-│   ├── 03_cleaning.sql
-│   ├── 04_golden_dataset.sql
-│   ├── 05_golden_validation.sql
-│   ├── 06_recovery_metrics.sql
-│   ├── 07_mom_analysis.sql
-│   ├── 08_dpd_analysis.sql
-│   ├── 09_final_analysis.sql
-│   └── 10_targeting_monthly.sql
-│
-├── run_sql.py
-├── run_cleaning.py
-├── run_golden.py
-├── run_validation.py
-├── run_metrics.py
-├── run_mom.py
-├── run_dpd.py
-├── run_final_analysis.py
-├── run_targeting_monthly.py
-├── check_schema.py
-│
-├── README.md
-└── .gitignore
+├── .gitignore
+└── README.md
+Data Profiling
+
+The first stage profiles the raw datasets to understand:
+
+Number of records
+Number of unique identifiers
+Duplicate records
+Missing values
+Invalid monetary values
+Referential integrity
+Status distributions
+Basic dataset structure
+
+For example, the payment dataset contained:
+
+10,005 payment records
+10,000 unique payment IDs
+Duplicate payment records were identified
+No invalid payment amounts
+No missing values in the checked payment fields
+No orphan payment records
+
+The analysis therefore does not blindly trust raw totals.
+
+Data Quality Findings
+
+Several data-quality issues were identified during profiling.
+
+The payment dataset contained duplicate payment IDs.
+
+The raw payment data contained:
+
+10,005 payment records
+10,000 unique payments
+
+Duplicates affected both successful and failed payment records.
+
+The duplicated successful payment amount was approximately:
+
+79,738.18
+
+Therefore, counting raw payment rows would overstate recovery.
+
+The cleaning process removes these duplicate records before calculating recovery metrics.
+
+Data Cleaning
+
+The cleaning layer creates standardized DuckDB tables such as:
+
+clean_borrowers
+clean_accounts
+clean_agents
+clean_agent_sessions
+clean_campaigns
+clean_daily_targeting
+clean_calls
+clean_call_attempts
+clean_call_dispositions
+clean_whatsapp_events
+clean_sms_events
+clean_field_visits
+clean_promises_to_pay
+clean_payments
+clean_vendor_telephony
+clean_complaints
+clean_account_status_history
+
+The cleaning process handles:
+
+Duplicate records
+Standardized identifiers
+Data types
+Status values
+Date and timestamp fields
+Monetary values
+Referential integrity
+Golden Dataset
+
+A monthly account-level analytical dataset is created with the grain:
+
+One row per account per month
+
+The Golden Dataset combines:
+
+Account information
+Borrower information
+DPD
+Outstanding amount
+Call activity
+Call attempts
+Contacts
+Promises-to-pay
+Kept promises-to-pay
+Successful payments
+Recovered amount
+Targeting strategy
+Priority band
+Propensity score
+
+The final Golden Dataset contains:
+
+33,362 rows
+4,200 unique accounts
+12 months
+Golden Dataset Validation
+
+The Golden Dataset was validated against the cleaned source data.
+
+Recovered Amount
+Clean Payments:    61,638,872.27
+Golden Dataset:    61,638,872.27
+Successful Payments
+Clean Payments:    7,504
+Golden Dataset:    7,504
+Promises to Pay
+Clean PTP:         6,500
+Golden Dataset:    6,500
+Calls
+Clean Calls:       30,000
+Golden Dataset:    30,000
+
+Additional validation confirmed:
+
+Missing borrower-account relationships: 0
+Negative recovery rows:                0
+Recovery Metrics
+
+The main recovery metric is:
+
+Recovery Rate =
+Recovered Amount / Outstanding Amount
+
+Additional metrics include:
+
+Recovery per account
+Recovery per attempt
+Contact rate
+PTP rate
+PTP kept rate
+Total attempts
+Total contacts
+Total recovered amount
+Key Findings
+1. Recovery improvement was not sustained
+
+Monthly recovery rates were:
+
+Month	Recovery Rate
+Sep 2025	7.52%
+Oct 2025	7.21%
+Nov 2025	6.69%
+Dec 2025	6.64%
+Jan 2026	6.75%
+Feb 2026	7.49%
+Mar 2026	7.44%
+Apr 2026	6.89%
+May 2026	6.72%
+Jun 2026	6.70%
+Jul 2026	6.69%
+Aug 2026	7.14%
+
+The largest month-on-month increase occurred from January to February 2026:
+
+Recovery Rate:
+6.75% → 7.49%
+
+
+Month-on-month improvement:
++10.99%
+
+However, the improvement was not sustained in subsequent months.
+
+Therefore, the data does not support a claim of sustained recovery improvement.
+
+2. NEW_TARGETING did not demonstrate superior recovery
+
+The overall targeting analysis produced:
+
+Targeting Strategy	Recovery Rate
+OLD_TARGETING	4.68%
+NEW_TARGETING	4.61%
+
+The monthly targeting analysis also shows that NEW_TARGETING was introduced in March 2026.
+
+The February 2026 recovery increase occurred before the introduction of NEW_TARGETING.
+
+Therefore, the February improvement cannot reasonably be attributed to the new targeting strategy based on this dataset alone.
+
+This is an important distinction between:
+
+Correlation / timing
+
+and
+
+Causal impact
+3. Recovery varies by borrower segment
+Borrower Segment	Recovery Rate
+Informal	7.43%
+Salaried	7.03%
+Self_Employed	6.68%
+
+The Informal segment had the highest recovery rate among the analyzed borrower segments.
+
+4. Recovery varies by client
+Client	Recovery Rate
+Client_D	7.12%
+Client_B	7.11%
+Client_A	6.99%
+Client_C	6.71%
+
+Client performance is relatively close but still shows measurable variation.
+
+5. DPD affects recovery performance
+
+Recovery was analyzed across DPD buckets:
+
+01-30
+31-60
+61-90
+91-120
+121-180
+
+The analysis demonstrates that recovery performance varies across delinquency stages.
+
+This provides a basis for evaluating whether collection strategies should differ by DPD bucket.
+
+Dashboard
+
+The project includes an interactive Streamlit dashboard built with:
+
+Streamlit
+Plotly
+Pandas
+
+The dashboard provides:
+
+KPI Cards
+Recovery Rate
+Total Recovered
+Successful Payments
+Accounts Analyzed
+Visualizations
+Monthly Recovery Rate
+Recovery Rate by DPD
+Old vs New Targeting
+Recovery Rate by Borrower Segment
+Recovery Rate by Client
+Monthly Performance Table
+Filters
+Month
+Client
+Borrower Segment
+Running the Project
+1. Clone the repository
+git clone https://github.com/BudagamHaasini/collections-recovery-analysis.git
+cd collections-recovery-analysis
+2. Install dependencies
+python -m pip install duckdb pandas streamlit plotly
+3. Run SQL analysis
+
+The individual Python scripts execute the SQL analysis stages.
+
+For example:
+
+python run_sql.py
+python run_cleaning.py
+python run_golden.py
+python run_validation.py
+python run_metrics.py
+python run_mom.py
+python run_dpd.py
+python run_final_analysis.py
+python run_targeting_monthly.py
+Running the Dashboard
+
+The dashboard uses:
+
+golden_account_month.csv
+
+as its analytical input.
+
+If the file needs to be regenerated, run:
+
+python export_dashboard.py
+
+This creates:
+
+golden_account_month.csv
+
+Then start Streamlit:
+
+python -m streamlit run app.py
+
+The dashboard will be available locally through the URL displayed by Streamlit, normally:
+
+http://localhost:8501
+Reproducibility
+
+The project separates the analytical stages so that the workflow can be reproduced:
+
+Profiling
+    ↓
+Quality Checks
+    ↓
+Cleaning
+    ↓
+Golden Dataset
+    ↓
+Validation
+    ↓
+Metrics
+    ↓
+Analysis
+    ↓
+Dashboard
+
+Generated files such as the dashboard CSV are excluded from version control where appropriate.
+
 Limitations
 
-This analysis is primarily descriptive and does not establish causal relationships.
+This analysis identifies associations and performance patterns but does not establish causal impact.
 
-## In particular:
+In particular:
 
-Targeting groups may contain different borrower populations.
-Records without targeting assignments limit targeting comparisons.
-Observational recovery differences cannot by themselves prove that a strategy caused an improvement.
-Agent productivity anomalies were flagged rather than corrected because their underlying cause was unknown.
-The recovery metric is based on recovered amount relative to outstanding amount and should be interpreted as a portfolio-level recovery ratio.
-Additional statistical or experimental analysis would be required to establish causal effects.
-Final Conclusion
+The observed February 2026 improvement cannot by itself prove that a specific strategy caused the improvement.
+NEW_TARGETING was introduced after the February increase.
+Additional experimental design or controlled testing would be required to establish causal impact.
+Recovery performance can also be affected by borrower mix, DPD composition, outstanding balances, client mix, and collection activity.
+Business Recommendation
 
-Based on the analyzed data, the statement that recovery has improved by 11% month-on-month is not supported as a sustained trend.
+Based on the available data:
 
-An approximately 11% improvement occurred specifically between January and February 2026, but the improvement was not maintained in subsequent months.
+Do not report the February 2026 increase as a sustained improvement.
+Do not attribute the February increase to NEW_TARGETING because the strategy was introduced afterward.
+Continue monitoring recovery rate month over month.
+Evaluate targeting performance by controlling for borrower segment and DPD.
+Consider controlled testing of targeting strategies before making causal performance claims.
+Monitor recovery per account and recovery per attempt in addition to aggregate recovery.
+Skills Demonstrated
 
-The analysis also shows that the February improvement occurred before the introduction of the new targeting strategy, so the improvement cannot be attributed to NEW_TARGETING.
+This project demonstrates practical experience with:
 
-The appropriate business conclusion is therefore to treat February 2026 as a specific period of improvement requiring further investigation rather than evidence of a sustained 11% month-on-month recovery improvement.
+SQL
+DuckDB
+Python
+Pandas
+Data Cleaning
+Data Quality Analysis
+Data Validation
+Data Modeling
+Analytical Dataset Design
+KPI Development
+Month-on-Month Analysis
+DPD Analysis
+Segmentation Analysis
+Targeting Strategy Analysis
+Business Analysis
+Streamlit
+Plotly
+Git
+GitHub
+Conclusion
 
+The analysis shows that recovery performance fluctuated throughout the 12-month period rather than demonstrating a sustained improvement.
 
+Although recovery increased by approximately 11% month over month from January to February 2026, the improvement was not sustained. Furthermore, NEW_TARGETING was introduced after the February increase, so the available evidence does not support attributing that increase to the new targeting strategy.
 
-### Final repo check
-
-
-Before committing, make sure these are **not** uploaded:
-
-
-```text
-collections_analysis.duckdb
-__pycache__/
-profiling_output.txt
-
-Your .gitignore handles those.
-
-Then run:
-
-git status
-
-If everything looks correct:
-
-git add .
-git commit -m "Complete collections recovery analysis"
-git push
+The project therefore demonstrates the importance of validating business claims against cleaned, reconciled, and properly modeled data before drawing conclusions.
